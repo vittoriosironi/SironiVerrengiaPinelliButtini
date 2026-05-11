@@ -1,0 +1,27 @@
+Bootstrap: docker
+From: python:3.10-slim
+
+%files
+    src/ /app/src/
+    requirements.txt /app/requirements.txt
+
+%post
+    apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        && rm -rf /var/lib/apt/lists/*
+    
+    pip install --no-cache-dir -r /app/requirements.txt
+
+%environment
+    export PYTHONPATH=/app/src
+
+%runscript
+    python /app/src/astralog_mock.py "$@"
+
+%labels
+    Author "SE4HPC Team"
+    Version "v1.0"
+
+%help
+    Container per AstraLog-HPC Mock Engine.
+    Esecuzione: singularity run app_container.sif --rules <rules.json> --input <input.csv> --output <out_dir>
