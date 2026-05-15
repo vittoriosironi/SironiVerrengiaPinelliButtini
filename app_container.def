@@ -1,27 +1,40 @@
+# Bootstrap from a lightweight Python 3.10 Docker image to keep the container small.
 Bootstrap: docker
 From: python:3.10-slim
 
+# %files section copies files from the host system (GitHub repo) into the container.
 %files
+    # Copy the source code directory into the container's /app directory.
     src/ /app/src/
+    # Copy the dependencies list.
     requirements.txt /app/requirements.txt
 
+# %post section runs commands inside the container during the build process to set it up.
 %post
+    # Update package lists, install essential build tools, and clean up the apt cache to reduce image size.
     apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
         && rm -rf /var/lib/apt/lists/*
-    
+
+    # Install the Python dependencies specified in requirements.txt without caching locally.
     pip install --no-cache-dir -r /app/requirements.txt
 
+# %environment section defines environment variables that will be active when the container is executed.
 %environment
+    # Add the source directory to the Python path in order to properly import modules.
     export PYTHONPATH=/app/src
 
+# %runscript section defines the default command executed when using 'singularity run'.
 %runscript
+    # Execute the main AstraLog-HPC mock script, passing along any command-line arguments ("$@").
     python /app/src/astralog_mock.py "$@"
 
+# Metadata for the container.
 %labels
     Author "SE4HPC Team"
     Version "v1.0"
 
+# %help section provides instructions to the user when they use 'singularity run-help'.
 %help
     Container per AstraLog-HPC Mock Engine.
     Esecuzione: singularity run app_container.sif --rules <rules.json> --input <input.csv> --output <out_dir>
