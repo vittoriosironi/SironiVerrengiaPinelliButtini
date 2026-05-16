@@ -43,4 +43,4 @@ jobs:
       # Build the container image from its definition.
       - name: Build Singularity image
         run: |
-          singularity build app_container.sif app_container.def
+          singularity build --fakeroot app_container.sif app_container.def
