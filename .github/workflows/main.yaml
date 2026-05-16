@@ -33,3 +33,14 @@ jobs:
       - name: Run tests with pytest
         run: |
           python3 -m pytest -v
+          
+      # Install singularity in the runner environment.
+      - name: Setup singularity
+        uses: eWaterCycle/setup-singularity@v7
+        with:
+          singularity-version: 3.8.3
+
+      # Build the container image from its definition.
+      - name: Build Singularity image
+        run: |
+          singularity build app_container.sif app_container.def
