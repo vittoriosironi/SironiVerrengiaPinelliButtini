@@ -1,4 +1,4 @@
-name: AstraLog CI Pipeline
+name: AstraLog CI/CD Pipeline
 
 # This workflow is triggered automatically on every push to the 'main' branch.
 on:
@@ -7,9 +7,11 @@ on:
       - main
 
 jobs:
-  build-and-test:
+  build-test-deploy:
     # The runner environment is the latest Ubuntu image provided by GitHub Actions.
     runs-on: ubuntu-latest
+    env:
+      REMOTE_RUN_DIR: ${{ secrets.HPC_REMOTE_DIR }}/run-${{ github.sha }}
 
     steps:
       # Check out the repository code so the runner workspace can access it.
@@ -44,3 +46,55 @@ jobs:
       - name: Build Singularity image
         run: |
           apptainer build app_container.sif app_container.def
+
+      - name: Prepare remote directory
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HPC_HOST }}
+          username: ${{ secrets.HPC_USER }}
+          key: ${{ secrets.HPC_SSH_KEY }}
+          port: ${{ secrets.HPC_PORT }}
+          script: |
+            mkdir -p "${REMOTE_RUN_DIR}/input"
+
+      - name: Copy container to cluster
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HPC_HOST }}
+          username: ${{ secrets.HPC_USER }}
+          key: ${{ secrets.HPC_SSH_KEY }}
+          port: ${{ secrets.HPC_PORT }}
+          source: "app_container.sif"
+          target: ${{ env.REMOTE_RUN_DIR }}
+
+      - name: Copy job script to cluster
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HPC_HOST }}
+          username: ${{ secrets.HPC_USER }}
+          key: ${{ secrets.HPC_SSH_KEY }}
+          port: ${{ secrets.HPC_PORT }}
+          source: "job.sh"
+          target: ${{ env.REMOTE_RUN_DIR }}
+
+      - name: Copy input files to cluster
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HPC_HOST }}
+          username: ${{ secrets.HPC_USER }}
+          key: ${{ secrets.HPC_SSH_KEY }}
+          port: ${{ secrets.HPC_PORT }}
+          source: "input/rules.json,input/telemetry_cleaned.csv"
+          target: ${{ env.REMOTE_RUN_DIR }}
+
+      - name: Submit SLURM job on Galileo100
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HPC_HOST }}
+          username: ${{ secrets.HPC_USER }}
+          key: ${{ secrets.HPC_SSH_KEY }}
+          port: ${{ secrets.HPC_PORT }}
+          script: |
+            cd "${REMOTE_RUN_DIR}"
+            ls -R
+            sbatch job.sh
