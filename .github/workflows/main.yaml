@@ -55,7 +55,7 @@ jobs:
           key: ${{ secrets.HPC_SSH_KEY }}
           port: ${{ secrets.HPC_PORT }}
           script: |
-            mkdir -p "${REMOTE_RUN_DIR}/input"
+            mkdir -p "${{env.REMOTE_RUN_DIR}}/input"
 
       - name: Copy container to cluster
         uses: appleboy/scp-action@v0.1.7
@@ -95,6 +95,6 @@ jobs:
           key: ${{ secrets.HPC_SSH_KEY }}
           port: ${{ secrets.HPC_PORT }}
           script: |
-            cd "${REMOTE_RUN_DIR}"
+            cd "${{env.REMOTE_RUN_DIR}}"
             ls -R
             sbatch job.sh
