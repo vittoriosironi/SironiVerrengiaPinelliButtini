@@ -60,7 +60,7 @@ jobs:
           port: ${{ secrets.HPC_PORT }}
           # Create unique run directory and input subdirectory.
           script: |
-            mkdir -p "${{env.REMOTE_RUN_DIR}}/input"
+            mkdir -p "${{ env.REMOTE_RUN_DIR }}/input"
 
       # Securely copy the built Singularity container (.sif) to the cluster.
       - name: Copy container to cluster
@@ -105,6 +105,6 @@ jobs:
           port: ${{ secrets.HPC_PORT }}
           # Navigate to the run-specific directory, list the files to verify the transfer, submit the job.sh script to the SLURM workload manager.
           script: |
-            cd "${{env.REMOTE_RUN_DIR}}"
+            cd "${{ env.REMOTE_RUN_DIR }}"
             ls -R
             sbatch job.sh
