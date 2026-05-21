@@ -1,6 +1,23 @@
+## Members
+- Verrengia Alessandro
+- Sironi Vittorio
+- Pinelli Gaia Bianca
+- Buttini Nicolò
+
 ## AstraLog-HPC: Standard Track Implementation
 
 This repository contains the CI/CD pipeline and containerization logic for the AstraLog-HPC reference implementation. 
+
+## Work Distribution
+- Class Diagram: Buttini (18h)
+- Use Cases: Buttini (6h)
+- Sequence Diagram: Buttini (2h)
+- Domain Assumptions: Verrengia
+- Requirements: Verrengia
+- CI/CD Pipeline: Sironi
+- Containerization: Verrengia
+- HPC Execution: Pinelli
+- Automation: Pinelli
 
 ### Continuous Integration (CI) Pipeline
 The CI/CD pipeline is implemented using GitHub Actions and is defined in `.github/workflows/main.yaml`. 
@@ -20,9 +37,3 @@ To ensure reproducible execution on HPC environments like the Galileo100 cluster
 * **Environment Configuration:** The `%post` block updates the system packages, installs necessary build tools, and installs the Python requirements via `pip`.
 * **Execution Setup:** The `PYTHONPATH` is explicitly set to `/app/src` in the `%environment` block to ensure all internal module imports resolve correctly.
 * **Runscript:** Executing the container directly (`singularity run`) triggers the `astralog_mock.py` script, forwarding any provided command-line arguments to the application.
-
-### Next Steps for Full Automation
-As part of the ongoing Step 1 and Step 2 phases of the project, this pipeline will be extended to:
-1.  Automatically build the Singularity container image (`.sif`) directly within the GitHub Actions runner.
-2.  Securely transfer the container and a `job.sh` submission script to the Galileo100 cluster using GitHub Secrets.
-3.  Automate the execution of the application on the cluster via the SLURM job scheduler and retrieve the standard output/error files back into the repository.
