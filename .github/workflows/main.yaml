@@ -10,6 +10,8 @@ jobs:
   build-test-deploy:
     # The runner environment is the latest Ubuntu image provided by GitHub Actions.
     runs-on: ubuntu-latest
+    # Define environment variables used across multiple steps.
+    # Append the GitHub commit SHA to the directory name to create a unique working directory for every run, preventing data overwrite on the cluster.
     env:
       REMOTE_RUN_DIR: ${{ secrets.HPC_REMOTE_DIR }}/run-${{ github.sha }}
 
@@ -36,7 +38,7 @@ jobs:
         run: |
           python3 -m pytest -v
           
-      # Install singularity in the runner environment.
+      # Install singularity in the GitHub Actions runner environment.
       - name: Set up apptainer
         uses: eWaterCycle/setup-apptainer@v2
         with:
@@ -47,6 +49,8 @@ jobs:
         run: |
           apptainer build app_container.sif app_container.def
 
+      # Connect to the HPC cluster via SSH to prepare the environment.
+      # Credentials are injected securely using GitHub Secrets.
       - name: Prepare remote directory
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -54,9 +58,11 @@ jobs:
           username: ${{ secrets.HPC_USER }}
           key: ${{ secrets.HPC_SSH_KEY }}
           port: ${{ secrets.HPC_PORT }}
+          # Create unique run directory and input subdirectory.
           script: |
             mkdir -p "${{env.REMOTE_RUN_DIR}}/input"
 
+      # Securely copy the built Singularity container (.sif) to the cluster.
       - name: Copy container to cluster
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -67,6 +73,7 @@ jobs:
           source: "app_container.sif"
           target: ${{ env.REMOTE_RUN_DIR }}
 
+      # Securely copy the SLURM job submission script to the cluster.
       - name: Copy job script to cluster
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -77,6 +84,7 @@ jobs:
           source: "job.sh"
           target: ${{ env.REMOTE_RUN_DIR }}
 
+      # Securely copy the necessary input files (rules and telemetry data) to the cluster.
       - name: Copy input files to cluster
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -87,6 +95,7 @@ jobs:
           source: "input/rules.json,input/telemetry_cleaned.csv"
           target: ${{ env.REMOTE_RUN_DIR }}
 
+      # Connect to the HPC cluster via SSH one final time to submit the job.
       - name: Submit SLURM job on Galileo100
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -94,6 +103,7 @@ jobs:
           username: ${{ secrets.HPC_USER }}
           key: ${{ secrets.HPC_SSH_KEY }}
           port: ${{ secrets.HPC_PORT }}
+          # Navigate to the run-specific directory, list the files to verify the transfer, submit the job.sh script to the SLURM workload manager.
           script: |
             cd "${{env.REMOTE_RUN_DIR}}"
             ls -R
